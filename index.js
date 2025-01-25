@@ -6,6 +6,10 @@ const cloudinary = require("cloudinary").v2;
 const cors = require("cors");
 const dotenv = require("dotenv");
 const stripe = require("stripe");
+const uid2 = require("uid2");
+const SHA256 = require("crypto-js/sha256");
+const encBase64 = require("crypto-js/enc-base64");
+const User = require("./models/User");
 
 dotenv.config();
 
@@ -818,6 +822,69 @@ app.post("/api/create-checkout-session", async (req, res) => {
     res
       .status(500)
       .json({ error: "Erreur lors de la création de la session de paiement" });
+  }
+});
+
+// SIGNUP
+app.post("/user/signup", async (req, res) => {
+  try {
+    // Vérifier que tous les champs requis sont présents
+    if (req.body.email && req.body.password) {
+      const { email, password } = req.body;
+
+      // Vérifier que l'email n'est pas déjà pris
+      const existingUser = await User.findOne({ email: email });
+
+      if (existingUser) {
+        return res.status(400).json({ message: "Cet email est déjà pris." });
+      } else {
+        // Générer un salt et un token
+        const salt = uid2(16);
+        const token = uid2(32);
+
+        // Générer un hash
+        const saltedPassword = password + salt;
+        const hash = SHA256(saltedPassword).toString(encBase64);
+
+        // Créer un nouveau user
+        const newUser = new User({
+          email,
+          token,
+          hash,
+          salt,
+        });
+
+        // Enregistrer le user en BDD
+        await newUser.save();
+
+        return res.status(201).json({ token: newUser.token });
+      }
+    } else {
+      return res.status(400).json({ message: "Missing parameters" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+// LOGIN
+app.post("/user/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const userFound = await User.findOne({ email: email });
+    if (!userFound) {
+      return res.status(401).json({ message: "Mot de passe ou email incorrect" });
+    } else {
+      const newSaltedPassword = password + userFound.salt;
+      const newHash = SHA256(newSaltedPassword).toString(encBase64);
+      if (newHash !== userFound.hash) {
+        return res.status(401).json({ message: "Mot de passe ou email incorrect" });
+      } else {
+        return res.status(200).json({ token: userFound.token });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
 
