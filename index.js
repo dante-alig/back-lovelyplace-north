@@ -873,12 +873,16 @@ app.post("/user/login", async (req, res) => {
     const { email, password } = req.body;
     const userFound = await User.findOne({ email: email });
     if (!userFound) {
-      return res.status(401).json({ message: "Mot de passe ou email incorrect" });
+      return res
+        .status(401)
+        .json({ message: "Mot de passe ou email incorrect" });
     } else {
       const newSaltedPassword = password + userFound.salt;
       const newHash = SHA256(newSaltedPassword).toString(encBase64);
       if (newHash !== userFound.hash) {
-        return res.status(401).json({ message: "Mot de passe ou email incorrect" });
+        return res
+          .status(401)
+          .json({ message: "Mot de passe ou email incorrect" });
       } else {
         return res.status(200).json({ token: userFound.token });
       }
