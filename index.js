@@ -764,7 +764,7 @@ app.get("/place/hours/:placeId", async (req, res) => {
   try {
     const { placeId } = req.params;
 
-    // Vérifier si la clé API est configurée
+    // Vérifier si la clé API est configuré
     if (!process.env.GOOGLE_MAPS_API_KEY) {
       return res
         .status(500)
