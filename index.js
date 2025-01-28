@@ -909,6 +909,75 @@ app.post("/user/login", async (req, res) => {
   }
 });
 
+// Point de terminaison pour enregistrer les informations avec une image prédéfinie
+app.post("/location-with-image", async (req, res) => {
+  try {
+    const {
+      locationName,
+      locationAddress,
+      locationDescription,
+      tips,
+      socialmedia,
+      mediaLink,
+      hours,
+      priceRange,
+      keywords,
+      filters,
+      postalCode,
+      placeCategory,
+    } = req.body;
+
+    // Conversion JSON des champs mediaLink, hours, keywords, et filters s'ils sont envoyés sous forme de chaîne
+    const parsedMediaLink =
+      typeof mediaLink === "string" ? JSON.parse(mediaLink) : mediaLink;
+    const parsedHours = typeof hours === "string" ? JSON.parse(hours) : hours;
+    const parsedKeywords =
+      typeof keywords === "string" ? JSON.parse(keywords) : keywords;
+    const parsedFilters =
+      typeof filters === "string" ? JSON.parse(filters) : filters;
+
+    // URL de l'image prédéfinie
+    const predefinedImageUrl = "https://www.peninsula.com/-/media/images/paris/new/dining/loiseau-blanc/ppr-oiseau-blanc-interior-evening-1074/ppr-oiseaublanc.png?mw=987&hash=58953560C2A423F8B8D6B9EE0D7271CC";
+
+    // Création d'une nouvelle instance de Location avec l'image prédéfinie
+    const newLocation = new Location({
+      locationName,
+      locationAddress,
+      locationDescription,
+      tips,
+      socialmedia,
+      mediaLink: parsedMediaLink,
+      hours: parsedHours,
+      priceRange,
+      keywords: parsedKeywords,
+      filters: parsedFilters,
+      postalCode,
+      placeCategory,
+      photo: predefinedImageUrl, // Ajout de l'image prédéfinie
+    });
+
+    // Géocodage de l'adresse
+    const coordinates = await addressToCoordinates(
+      locationAddress,
+      process.env.GOOGLE_MAPS_API_KEY,
+      locationDescription,
+      predefinedImageUrl,
+      newLocation._id
+    );
+
+    // Ajout des coordonnées à l'instance
+    newLocation.location = coordinates;
+
+    // Sauvegarde de l'instance
+    await newLocation.save();
+
+    res.status(201).json(newLocation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Démarrage du serveur
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
