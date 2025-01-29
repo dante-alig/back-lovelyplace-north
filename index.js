@@ -685,6 +685,38 @@ app.put("/location/:id/description", async (req, res) => {
   }
 });
 
+// Route pour mettre à jour le prix d'une instance
+app.put("/location/:id/price", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { priceRange } = req.body;
+
+    // Vérification du champ requis
+    if (!priceRange) {
+      return res.status(400).json({
+        message: "Le prix est requis",
+      });
+    }
+
+    const location = await Location.findById(id);
+    if (!location) {
+      return res.status(404).json({ message: "Instance non trouvée" });
+    }
+
+    // Mise à jour du prix
+    location.priceRange = priceRange;
+
+    await location.save();
+    res.json({
+      message: "Prix mis à jour avec succès",
+      priceRange: location.priceRange,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du prix:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
 // Fonction pour convertir une adresse en coordonnées
 const addressToCoordinates = async (
   address,
