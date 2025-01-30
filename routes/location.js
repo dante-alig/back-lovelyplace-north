@@ -75,7 +75,6 @@ router.post("/save", async (req, res) => {
       placeCategory,
     } = req.body;
 
-    // Conversion JSON des champs mediaLink, hours, keywords, et filters s'ils sont envoyés sous forme de chaîne
     const parsedMediaLink =
       typeof mediaLink === "string" ? JSON.parse(mediaLink) : mediaLink;
     const parsedHours = typeof hours === "string" ? JSON.parse(hours) : hours;
@@ -90,7 +89,6 @@ router.post("/save", async (req, res) => {
       return match ? match[1] : null;
     };
 
-    // Appliquer extractHref à chaque élément de mediaLink s'il s'agit d'un tableau
     const processedMediaLink = Array.isArray(parsedMediaLink)
       ? parsedMediaLink.map((link) => extractHref(link))
       : parsedMediaLink;
@@ -111,9 +109,7 @@ router.post("/save", async (req, res) => {
     });
 
     // Gestion des fichiers photos
-    console.log("req.files>>>>>", req.files);
     if (req.files && req.files.photos) {
-      console.log("les photos>>>>", req.files.photos);
       const photoFiles = Array.isArray(req.files.photos)
         ? req.files.photos
         : [req.files.photos];
@@ -144,7 +140,6 @@ router.post("/save", async (req, res) => {
   }
 });
 
-// Point de terminaison pour enregistrer les informations avec une image prédéfinie
 router.post("/location-with-image", async (req, res) => {
   try {
     const {
@@ -162,7 +157,6 @@ router.post("/location-with-image", async (req, res) => {
       placeCategory,
     } = req.body;
 
-    // Conversion JSON des champs mediaLink, hours, keywords, et filters s'ils sont envoyés sous forme de chaîne
     const parsedMediaLink =
       typeof mediaLink === "string" ? JSON.parse(mediaLink) : mediaLink;
     const parsedHours = typeof hours === "string" ? JSON.parse(hours) : hours;
@@ -171,7 +165,6 @@ router.post("/location-with-image", async (req, res) => {
     const parsedFilters =
       typeof filters === "string" ? JSON.parse(filters) : filters;
 
-    // URL de l'image prédéfinie
     const predefinedImageUrl =
       "https://www.peninsula.com/-/media/images/paris/new/dining/loiseau-blanc/ppr-oiseau-blanc-interior-evening-1074/ppr-oiseaublanc.png?mw=987&hash=58953560C2A423F8B8D6B9EE0D7271CC";
 
@@ -189,7 +182,7 @@ router.post("/location-with-image", async (req, res) => {
       filters: parsedFilters,
       postalCode,
       placeCategory,
-      photo: predefinedImageUrl, // Ajout de l'image prédéfinie
+      photo: predefinedImageUrl,
     });
 
     // Géocodage de l'adresse
@@ -248,13 +241,11 @@ router.put("/items/:id", async (req, res) => {
     const { id } = req.params;
     const updatedFields = req.body;
 
-    // Récupérer l'élément existant
     const location = await Location.findById(id);
     if (!location) {
       return res.status(404).json({ error: "Location non trouvée." });
     }
 
-    // Gestion des fichiers photos
     if (req.files && req.files.photos) {
       const photoFiles = Array.isArray(req.files.photos)
         ? req.files.photos
@@ -263,9 +254,7 @@ router.put("/items/:id", async (req, res) => {
       for (const photo of photoFiles) {
         const convertedPhoto = convertToBase64(photo);
         try {
-          // Upload sur Cloudinary
           const uploadResult = await cloudinary.uploader.upload(convertedPhoto);
-          // Ajouter l'URL de la photo à la liste des photos existantes
           location.photos.push(uploadResult.secure_url);
         } catch (uploadError) {
           console.error("Erreur lors de l'upload Cloudinary:", uploadError);
@@ -276,10 +265,8 @@ router.put("/items/:id", async (req, res) => {
       }
     }
 
-    // Mise à jour des autres champs si fournis
     Object.assign(location, updatedFields);
 
-    // Sauvegarder les modifications
     await location.save();
     res.status(200).json({
       message: "Location mise à jour avec succès.",
@@ -298,28 +285,23 @@ router.put("/items/:id", async (req, res) => {
 router.delete("/items/:id/photo", async (req, res) => {
   try {
     const { id } = req.params;
-    const { photoUrl } = req.body; // URL de la photo à supprimer
+    const { photoUrl } = req.body;
 
-    // Récupérer la location par son _id
     const location = await Location.findById(id);
     if (!location) {
       return res.status(404).json({ error: "Location non trouvée." });
     }
 
-    // Vérifier si la photo existe dans la liste des photos
     const photoIndex = location.photos.indexOf(photoUrl);
     if (photoIndex === -1) {
       return res.status(404).json({ error: "Photo non trouvée." });
     }
 
-    // Supprimer la photo de Cloudinary
     const publicId = photoUrl.split("/").pop().split(".")[0]; // Extraire le public_id
     await cloudinary.uploader.destroy(publicId);
 
-    // Supprimer la photo de la liste
     location.photos.splice(photoIndex, 1);
 
-    // Sauvegarder les modifications
     await location.save();
 
     res.status(200).json({

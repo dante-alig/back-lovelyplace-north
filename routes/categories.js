@@ -77,20 +77,16 @@ router.get("/eat", async (req, res) => {
   try {
     const { postalCode, keywords, priceRange, filters } = req.query;
 
-    // Recherche initiale pour placeCategory === "manger_ensemble"
     const baseFilter = { placeCategory: "manger_ensemble" };
 
-    // Ajout des autres filtres dynamiques
     if (postalCode) baseFilter.postalCode = postalCode;
     if (keywords) baseFilter.keywords = { $in: keywords.split(",") };
     if (priceRange) baseFilter.priceRange = priceRange;
     if (filters) {
-      // Convertir la chaîne de filtres en tableau
-      const filterArray = filters.split(","); // Exemple : "Décoration:Cosy,Ambiance:Branchée"
-      baseFilter.filters = { $all: filterArray }; // Tous les filtres doivent être présents
+      const filterArray = filters.split(",");
+      baseFilter.filters = { $all: filterArray };
     }
 
-    // Recherche avec les filtres combinés
     const locations = await Location.find(baseFilter);
 
     if (locations.length === 0) {
@@ -112,7 +108,7 @@ router.get("/eat", async (req, res) => {
 // Recherche par proximité
 router.get("/filter-nearby", async (req, res) => {
   try {
-    const { address, maxDistance, placeCategory, typeOfSeason } = req.query; // Utilisation de req.query au lieu de req.body
+    const { address, maxDistance, placeCategory, typeOfSeason } = req.query;
 
     if (!address) {
       return res.status(400).json({ error: "Adresse manquante." });
@@ -137,13 +133,13 @@ router.get("/filter-nearby", async (req, res) => {
       if (!response.data.results || response.data.results.length === 0) {
         throw new Error("Adresse introuvable.");
       }
-      return response.data.results[0].geometry.location; // { lat, lng }
+      return response.data.results[0].geometry.location;
     }
 
     // Calcul de la distance (formule Haversine)
     function haversineDistance(lat1, lon1, lat2, lon2) {
       const toRadians = (deg) => (deg * Math.PI) / 180;
-      const R = 6371; // Rayon de la Terre en km
+      const R = 6371;
       const dLat = toRadians(lat2 - lat1);
       const dLon = toRadians(lon2 - lon1);
       const a =
@@ -161,16 +157,7 @@ router.get("/filter-nearby", async (req, res) => {
 
     const selecFilters = {};
     if (placeCategory) selecFilters.placeCategory = placeCategory;
-    // if (typeOfSeason) {
-    //   // Convertir la chaîne des filtres en tableau et rechercher les correspondances dans le tableau "filters" des documents
-    //   selecFilters.typeOfSeason = {
-    //     filters: {
-    //       $elemMatch: { $regex: `/^Type d’espace:${typeOfSeason}$/` },
-    //     },
-    //   };
-    // }
 
-    // Passez selecFilters directement sans envelopper
     const locations = await Location.find(selecFilters);
     console.log("locations", locations);
     console.log("selecFilters", selecFilters);

@@ -11,15 +11,13 @@ router.get("/filterCategories", async (req, res) => {
     const selecFilters = {};
     if (placeCategory) selecFilters.placeCategory = placeCategory;
     if (postalCode) selecFilters.postalCode = postalCode;
-    if (keywords) selecFilters.keywords = { $in: keywords.split(",") }; // Recherche parmi les mots-clés
+    if (keywords) selecFilters.keywords = { $in: keywords.split(",") };
     if (priceRange) selecFilters.priceRange = priceRange;
     if (filters) {
-      // Convertir la chaîne des filtres en tableau et rechercher les correspondances dans le tableau "filters" des documents
-      const filterArray = filters.split(","); // Exemple : "Décoration:Cosy,Ambiance:Branchée"
-      selecFilters.filters = { $all: filterArray }; // Tous les filtres doivent être présents
+      const filterArray = filters.split(",");
+      selecFilters.filters = { $all: filterArray };
     }
 
-    // Recherche dans la base de données
     const locations = await Location.find(selecFilters);
 
     if (locations.length === 0) {
@@ -48,11 +46,8 @@ router.get("/search", async (req, res) => {
       });
     }
 
-    // Création du pattern de recherche
-    // Insensible à la casse avec 'i'
     const searchRegex = new RegExp(query, "i");
 
-    // Recherche dans plusieurs champs
     const locations = await Location.find({
       $or: [
         { locationName: searchRegex },
@@ -61,7 +56,6 @@ router.get("/search", async (req, res) => {
         { keywords: searchRegex },
         { placeCategory: searchRegex },
         { tips: searchRegex },
-        // Recherche dans les filtres (qui sont au format "clé:valeur")
         { filters: searchRegex },
       ],
     });
