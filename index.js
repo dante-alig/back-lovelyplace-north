@@ -11,7 +11,7 @@ const specialRoutes = require("./routes/special");
 const apiRoutes = require("./routes/api");
 const categoriesRoutes = require("./routes/categories");
 const filtersRoutes = require("./routes/filters");
-const placesRoutes = require("./routes/places");
+const placeRoutes = require("./routes/places");
 
 const app = express();
 
@@ -31,7 +31,7 @@ connectDB()
     app.use("/api", apiRoutes);
     app.use("/categories", categoriesRoutes);
     app.use("/filters", filtersRoutes);
-    app.use("/places", placesRoutes);
+    app.use("/place", placeRoutes);
 
     // Démarrage du serveur
     const PORT = process.env.PORT || 8080;
