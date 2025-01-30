@@ -11,7 +11,7 @@ const specialRoutes = require("./routes/special");
 const apiRoutes = require("./routes/api");
 const categoriesRoutes = require("./routes/categories");
 const filtersRoutes = require("./routes/filters");
-const placeRoutes = require("./routes/places");
+const placeRoutes = require("./routes/place");
 
 const app = express();
 
